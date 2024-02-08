@@ -209,7 +209,30 @@ class IcmpHelperLibrary:
 
         def __validateIcmpReplyPacketWithOriginalPingData(self, icmpReplyPacket):
             # Hint: Work through comparing each value and identify if this is a valid response.
+
+            # Confirm the following items received are the same as what was sent:
+            # sequence number
+            # packet identifier
+            # raw data
+
+            # Retrieve the items from reply
+            sequenceNumberReceived = icmpReplyPacket.getIcmpSequenceNumber()
+            packetIdentifierReceived = icmpReplyPacket.getIcmpIdentifier()
+            rawDataReceived = icmpReplyPacket.getIcmpData()
+
+            # Initialize sent items
+            sequenceNumberSent = self.__packetSequenceNumber
+            packetIdentifierSent = self.__packetIdentifier
+            rawDataSent = self.__dataRaw
+
+
+
+
+
+            # Set the valid data variable in the IcmpPacket_EchoReply class based the outcome of the data comparison,
+            # after confirming the following items received are the same as what was sent.
             icmpReplyPacket.setIsValidResponse(True)
+
             pass
 
         # ############################################################################################################ #
@@ -335,6 +358,12 @@ class IcmpHelperLibrary:
         __recvPacket = b''
         __isValidResponse = False
 
+        # Create variables within the IcmpPacket_EchoReply class that identify whether each value that can be obtained
+        # from the class is valid.
+        __IcmpSequenceNumber_isValid = False
+        __IcmpIdentifier_isValid = False
+        __IcmpData_isValid = False
+
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Constructors                                                                            #
         #                                                                                                              #
@@ -404,6 +433,19 @@ class IcmpHelperLibrary:
         def isValidResponse(self):
             return self.__isValidResponse
 
+        # For example, the IcmpPacket_EchoReply class has an IcmpIdentifier. Create a variable, such as
+        # IcmpIdentifier_isValid, along with a getter function, such as getIcmpIdentifier_isValid() so you can easily
+        # track and identify which data points within the echo reply are valid.
+
+        def getIcmpSequenceNumber_isValid(self):
+            return self.__IcmpSequenceNumber_isValid
+
+        def getIcmpIdentifier_isValid(self):
+            return self.__IcmpIdentifier_isValid
+
+        def getIcmpData_isValid(self):
+            return self.__IcmpData_isValid
+
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Setters                                                                                 #
         #                                                                                                              #
@@ -413,6 +455,19 @@ class IcmpHelperLibrary:
         # ############################################################################################################ #
         def setIsValidResponse(self, booleanValue):
             self.__isValidResponse = booleanValue
+
+        # For example, the IcmpPacket_EchoReply class has an IcmpIdentifier. Create a variable, such as
+        # IcmpIdentifier_isValid, along with a setter function, such as setIcmpIdentifier_isValid(), so you can easily
+        # track and identify which data points within the echo reply are valid.
+
+        def setIcmpSequenceNumber_isValid(self, booleanValue):
+            self.__IcmpSequenceNumber_isValid = booleanValue
+
+        def setIcmpIdentifier_isValid(self, booleanValue):
+            self.__IcmpIdentifier_isValid = booleanValue
+
+        def setIcmpData_isValid(self, booleanValue):
+            self.__IcmpData_isValid = booleanValue
 
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Private Functions                                                                       #
@@ -519,13 +574,14 @@ class IcmpHelperLibrary:
 #                                                                                                                      #
 #                                                                                                                      #
 # #################################################################################################################### #
+
 def main():
     icmpHelperPing = IcmpHelperLibrary()
 
 
     # Choose one of the following by uncommenting out the line
     icmpHelperPing.sendPing("209.233.126.254")
-    # icmpHelperPing.sendPing("www.google.com")
+    icmpHelperPing.sendPing("www.google.com")
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
