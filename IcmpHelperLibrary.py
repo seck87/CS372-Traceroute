@@ -225,15 +225,45 @@ class IcmpHelperLibrary:
             packetIdentifierSent = self.__packetIdentifier
             rawDataSent = self.__dataRaw
 
+            print("-----Debug Messages Start-----")
 
+            # Check sequence number match and set the boolean value in reply packet
+            if sequenceNumberReceived == sequenceNumberSent:
+                icmpReplyPacket.setIcmpSequenceNumber_isValid(True)
+                print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Match)")
+            else:
+                icmpReplyPacket.setIcmpSequenceNumber_isValid(False)
+                print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Mismatch)")
 
+            # Check packet identifier match and set the boolean value in reply packet
+            if packetIdentifierReceived == packetIdentifierSent:
+                icmpReplyPacket.setIcmpIdentifier_isValid(True)
+                print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Match)")
+            else:
+                icmpReplyPacket.setIcmpIdentifier_isValid(False)
+                print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Mismatch)")
 
+            # Check raw data match and set the boolean value in reply packet
+            if rawDataReceived == rawDataSent:
+                icmpReplyPacket.setIcmpData_isValid(True)
+                print(
+                    f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Match)")
+            else:
+                icmpReplyPacket.setIcmpData_isValid(False)
+                print(
+                    f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Mismatch)")
+
+            print("-----Debug Messages End-----")
 
             # Set the valid data variable in the IcmpPacket_EchoReply class based the outcome of the data comparison,
-            # after confirming the following items received are the same as what was sent.
-            icmpReplyPacket.setIsValidResponse(True)
+            # after confirming the items received are the same as what was sent.
 
-            pass
+            if (icmpReplyPacket.getIcmpSequenceNumber_isValid() and icmpReplyPacket.getIcmpSequenceNumber_isValid()
+                    and icmpReplyPacket.getIcmpData_isValid()):
+                icmpReplyPacket.setIsValidResponse(True)
+            else:
+                icmpReplyPacket.setIsValidResponse(False)
+
 
         # ############################################################################################################ #
         # IcmpPacket Class Public Functions                                                                            #
