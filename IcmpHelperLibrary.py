@@ -221,9 +221,14 @@ class IcmpHelperLibrary:
             rawDataReceived = icmpReplyPacket.getIcmpData()
 
             # Initialize sent items
-            sequenceNumberSent = self.__packetSequenceNumber
-            packetIdentifierSent = self.__packetIdentifier
-            rawDataSent = self.__dataRaw
+            # sequenceNumberSent = self.__packetSequenceNumber
+            sequenceNumberSent = self.getPacketSequenceNumber()
+
+            # packetIdentifierSent = self.__packetIdentifier
+            packetIdentifierSent = self.getPacketIdentifier()
+
+            # rawDataSent = self.__dataRaw
+            rawDataSent = self.getDataRaw()
 
             print("-----Debug Messages Start-----")
 
@@ -233,6 +238,8 @@ class IcmpHelperLibrary:
                 print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Match)")
             else:
                 icmpReplyPacket.setIcmpSequenceNumber_isValid(False)
+                # Discrepancy, share sent data with reply object
+                icmpReplyPacket.setSequenceNumberOriginal(sequenceNumberSent)
                 print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Mismatch)")
 
             # Check packet identifier match and set the boolean value in reply packet
@@ -241,6 +248,8 @@ class IcmpHelperLibrary:
                 print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Match)")
             else:
                 icmpReplyPacket.setIcmpIdentifier_isValid(False)
+                # Discrepancy, share sent data with reply object
+                icmpReplyPacket.setPacketIdentifierOriginal(packetIdentifierSent)
                 print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Mismatch)")
 
             # Check raw data match and set the boolean value in reply packet
@@ -250,6 +259,8 @@ class IcmpHelperLibrary:
                     f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Match)")
             else:
                 icmpReplyPacket.setIcmpData_isValid(False)
+                # Discrepancy, share sent data with reply object
+                icmpReplyPacket.setRawDataOriginal(rawDataSent)
                 print(
                     f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Mismatch)")
 
@@ -394,6 +405,11 @@ class IcmpHelperLibrary:
         __IcmpIdentifier_isValid = False
         __IcmpData_isValid = False
 
+        # Following values will be received from IcmpPacket object only in case of discrepancy
+        __sequenceNumberOriginal = None
+        __packetIdentifierOriginal = None
+        __rawDataOriginal = None
+
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Constructors                                                                            #
         #                                                                                                              #
@@ -476,6 +492,17 @@ class IcmpHelperLibrary:
         def getIcmpData_isValid(self):
             return self.__IcmpData_isValid
 
+        # Get methods for additional data
+
+        def getSequenceNumberOriginal(self):
+            return self.__sequenceNumberOriginal
+
+        def getPacketIdentifierOriginal(self):
+            return self.__packetIdentifierOriginal
+
+        def getRawDataOriginal(self):
+            return self.__rawDataOriginal
+
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Setters                                                                                 #
         #                                                                                                              #
@@ -498,6 +525,17 @@ class IcmpHelperLibrary:
 
         def setIcmpData_isValid(self, booleanValue):
             self.__IcmpData_isValid = booleanValue
+
+        # Set methods for additional data
+
+        def setSequenceNumberOriginal(self, sequenceNumber):
+            self.__sequenceNumberOriginal = sequenceNumber
+
+        def setPacketIdentifierOriginal(self, identifier):
+            self.__packetIdentifierOriginal = identifier
+
+        def setRawDataOriginal(self, rawData):
+            self.__rawDataOriginal = rawData
 
         # ############################################################################################################ #
         # IcmpPacket_EchoReply Private Functions                                                                       #
@@ -531,6 +569,16 @@ class IcmpHelperLibrary:
                       addr[0]
                   )
                  )
+
+            if self.__isValidResponse is False:
+                print("Echo response is invalid, reporting the following error information:")
+                if self.__IcmpSequenceNumber_isValid is False:
+                    print(f"Sequence number expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()}")
+                if self.__IcmpIdentifier_isValid is False:
+                    print(f"Sequence number expected: {self.__packetIdentifierOriginal} actual: {self.getIcmpIdentifier()}")
+                if self.__IcmpData_isValid is False:
+                    print(f"Sequence number expected: {self.__rawDataOriginal} actual: {self.getIcmpData()}")
+
 
     # ################################################################################################################ #
     # Class IcmpHelperLibrary                                                                                          #
