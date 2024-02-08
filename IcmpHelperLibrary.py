@@ -563,6 +563,10 @@ class IcmpHelperLibrary:
                   )
                  )
 
+
+            # Identify if the echo response is valid and report the error information details. For example, if the raw
+            # data is different, print to the console what the expected value and the actual value.
+
             if self.__isValidResponse is False:
                 print("Echo response is invalid, reporting the following error information:")
                 if self.__IcmpSequenceNumber_isValid is False:
