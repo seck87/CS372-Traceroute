@@ -646,7 +646,11 @@ class IcmpHelperLibrary:
             icmpPacket.printIcmpPacket_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             # we should be confirming values are correct, such as identifier and sequence number and data
 
-        self.printRttToConsole(rttContainerList, host)
+        # None would be present in rttContainerList only if ICMP response code is 0 but packet is not valid
+        # Packet would not be valid if one of these does not match for sent and received packet: sequence number,
+        # packet identifier and raw data.
+        if None not in rttContainerList:
+            self.printRttToConsole(rttContainerList, host)
 
 
 
