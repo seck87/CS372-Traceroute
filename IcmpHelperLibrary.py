@@ -643,11 +643,11 @@ class IcmpHelperLibrary:
             icmpPacket.printIcmpPacket_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             # we should be confirming values are correct, such as identifier and sequence number and data
 
-        self.printRttToConsole(rttContainerList, host, i)
+        self.printRttToConsole(rttContainerList, host)
 
 
 
-    def printRttToConsole(self, rttList, host, i):
+    def printRttToConsole(self, rttList, host):
         print(f"\nPing statistics for {host}:")
         print("Approximate round trip times in milli-seconds:")
         print(f"Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
