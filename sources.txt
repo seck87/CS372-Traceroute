@@ -8,3 +8,12 @@ https://datatracker.ietf.org/doc/html/rfc1739#page-5
 https://datatracker.ietf.org/doc/html/rfc1739#page-7
 https://docs.python.org/3/library/struct.html
 
+https://inspector.dev/how-to-round-numbers-in-python-fast-tips/#:~:text=The%20simplest%20way%20to%20round,rounded%20to%20the%20nearest%20integer.
+https://flexiple.com/python/python-new-line
+https://www.sciencedirect.com/topics/computer-science/packet-loss-rate#:~:text=The%20reliability%20of%20a%20communication,total%20number%20of%20packets%20sent.
+https://canvas.oregonstate.edu/courses/1946206/pages/programming-project-primer-traceroute-faq?module_item_id=23965635
+https://edstem.org/us/courses/51611/discussion/4241558
+https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+
+
+

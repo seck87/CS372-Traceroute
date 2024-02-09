@@ -228,14 +228,12 @@ class IcmpHelperLibrary:
             # Check sequence number match and set the boolean value in reply packet
             if sequenceNumberReceived == sequenceNumberSent:
                 icmpReplyPacket.setIcmpSequenceNumber_isValid(True)
-
             else:
                 icmpReplyPacket.setIcmpSequenceNumber_isValid(False)
 
             # Check packet identifier match and set the boolean value in reply packet
             if packetIdentifierReceived == packetIdentifierSent:
                 icmpReplyPacket.setIcmpIdentifier_isValid(True)
-
             else:
                 icmpReplyPacket.setIcmpIdentifier_isValid(False)
 
@@ -253,7 +251,7 @@ class IcmpHelperLibrary:
             # Set the valid data variable in the IcmpPacket_EchoReply class based the outcome of the data comparison,
             # after confirming the items received are the same as what was sent.
 
-            if (icmpReplyPacket.getIcmpSequenceNumber_isValid() and icmpReplyPacket.getIcmpSequenceNumber_isValid()
+            if (icmpReplyPacket.getIcmpSequenceNumber_isValid() and icmpReplyPacket.getIcmpIdentifier_isValid()
                     and icmpReplyPacket.getIcmpData_isValid()):
                 icmpReplyPacket.setIsValidResponse(True)
             else:
