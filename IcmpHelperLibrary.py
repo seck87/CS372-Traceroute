@@ -651,6 +651,8 @@ class IcmpHelperLibrary:
         # packet identifier and raw data.
         if None not in rttContainerList:
             self.printRttToConsole(rttContainerList, host)
+        else:
+            print("\nAn invalid packet has been received.")
 
 
 
