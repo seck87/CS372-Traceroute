@@ -11,7 +11,6 @@ import struct
 import time
 import select
 
-
 # #################################################################################################################### #
 # Class IcmpHelperLibrary                                                                                              #
 #                                                                                                                      #
@@ -30,6 +29,7 @@ import select
 #                                                                                                                      #
 # #################################################################################################################### #
 class IcmpHelperLibrary:
+
     # ################################################################################################################ #
     # Class IcmpPacket                                                                                                 #
     #                                                                                                                  #
@@ -68,8 +68,6 @@ class IcmpHelperLibrary:
         __ttl = 255                     # Time to live
 
         __DEBUG_IcmpPacket = False      # Allows for debug output
-
-        __rttContainer = []             # List container to store RTTs
 
         # ############################################################################################################ #
         # IcmpPacket Class Getters                                                                                     #
@@ -300,6 +298,13 @@ class IcmpHelperLibrary:
                 recvPacket, addr = mySocket.recvfrom(1024)  # recvPacket - bytes object representing data received
                 # addr  - address of socket sending data
                 timeReceived = time.time()
+
+                # Calculate RTT by using the formula in printResultToConsole function
+                bytes = struct.calcsize("d")
+                timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
+                rtt = (timeReceived - timeSent) * 1000
+                rounded_rtt = round(rtt)
+
                 timeLeft = timeLeft - howLongInSelect
                 if timeLeft <= 0:
                     print("  *        *        *        *        *    Request timed out (By no remaining time left).")
@@ -334,10 +339,9 @@ class IcmpHelperLibrary:
                         icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
                         self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
 
-
                         icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
 
-                        return      # Echo reply is the end and therefore should return
+                        return rounded_rtt     # Echo reply is the end and therefore should return
 
                     else:
                         print("error")
@@ -394,7 +398,7 @@ class IcmpHelperLibrary:
         __IcmpIdentifier_isValid = False
         __IcmpData_isValid = False
 
-        # Following values will be received from IcmpPacket object only in case of discrepancy
+        # Following values will be received from IcmpPacket object
         __sequenceNumberOriginal = None
         __packetIdentifierOriginal = None
         __rawDataOriginal = None
@@ -547,6 +551,10 @@ class IcmpHelperLibrary:
         def printResultToConsole(self, ttl, timeReceived, addr):
             bytes = struct.calcsize("d")
             timeSent = struct.unpack("d", self.__recvPacket[28:28 + bytes])[0]
+
+            # RTT = (timeReceived - timeSent) * 1000
+            # RTT = (timeReceived - struct.unpack("d", self.__recvPacket[28:28 + struct.calcsize("d")])[0]) * 1000
+
             print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d        Identifier=%d    Sequence Number=%d    %s" %
                   (
                       ttl,
@@ -575,15 +583,13 @@ class IcmpHelperLibrary:
                 print("---------------- End of debugging messages ----------------")
 
 
-            if self.__isValidResponse is True:
-                print("--------------- Start of debugging messages ---------------")
-                print("Echo response is VALID. All values are shown below. ")
-                print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
-                print(f"Packet indentifier (expected: {self.__packetIdentifierOriginal} actual: {self.getIcmpIdentifier()})")
-                print(f"Raw data (expected: {self.__rawDataOriginal} actual: {self.getIcmpData()})")
-                print("---------------- End of debugging messages ----------------")
-
-
+            #if self.__isValidResponse is True:
+                # print("--------------- Start of debugging messages ---------------")
+                # print("Echo response is VALID.")
+                # print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
+                # print(f"Packet indentifier (expected: {self.__packetIdentifierOriginal} actual: {self.getIcmpIdentifier()})")
+                # print(f"Raw data (expected: {self.__rawDataOriginal} actual: {self.getIcmpData()})")
+                #print("---------------- End of debugging messages ----------------")
 
 
     # ################################################################################################################ #
@@ -613,6 +619,8 @@ class IcmpHelperLibrary:
     def __sendIcmpEchoRequest(self, host):
         print("sendIcmpEchoRequest Started...") if self.__DEBUG_IcmpHelperLibrary else 0
 
+        rttContainerList = []
+
         for i in range(4):
             # Build packet
             icmpPacket = IcmpHelperLibrary.IcmpPacket()
@@ -625,11 +633,26 @@ class IcmpHelperLibrary:
 
             icmpPacket.buildPacket_echoRequest(packetIdentifier, packetSequenceNumber)  # Build ICMP for IP payload
             icmpPacket.setIcmpTarget(host)
-            icmpPacket.sendEchoRequest()                                                # Build IP
+
+            # icmpPacket return received rtt here
+            rtt = icmpPacket.sendEchoRequest()                                                # Build IP, return rtt
+            rttContainerList.append(rtt)
+
 
             icmpPacket.printIcmpPacketHeader_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             icmpPacket.printIcmpPacket_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             # we should be confirming values are correct, such as identifier and sequence number and data
+
+        self.printRttToConsole(rttContainerList, host, i)
+
+
+
+    def printRttToConsole(self, rttList, host, i):
+        print(f"\nPing statistics for {host}:")
+        print("Approximate round trip times in milli-seconds:")
+        print(f"Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
+
+
 
     def __sendIcmpTraceRoute(self, host):
         print("sendIcmpTraceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
@@ -660,12 +683,13 @@ class IcmpHelperLibrary:
 # #################################################################################################################### #
 
 def main():
+
     icmpHelperPing = IcmpHelperLibrary()
 
 
     # Choose one of the following by uncommenting out the line
     icmpHelperPing.sendPing("209.233.126.254")
-    icmpHelperPing.sendPing("www.google.com")
+    # icmpHelperPing.sendPing("www.google.com")
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
