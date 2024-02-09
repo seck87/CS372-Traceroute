@@ -565,7 +565,7 @@ class IcmpHelperLibrary:
 
             if self.__isValidResponse is False:
                 print("--------------- Start of debugging messages ---------------")
-                print("Echo response (invalid)")
+                print("Echo response is INVALID. The mismatched values are shown below. ")
                 if self.__IcmpSequenceNumber_isValid is False:
                     print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
                 if self.__IcmpIdentifier_isValid is False:
@@ -577,11 +577,14 @@ class IcmpHelperLibrary:
 
             if self.__isValidResponse is True:
                 print("--------------- Start of debugging messages ---------------")
-                print("Echo response (valid)")
+                print("Echo response is VALID. All values are shown below. ")
                 print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
                 print(f"Packet indentifier (expected: {self.__packetIdentifierOriginal} actual: {self.getIcmpIdentifier()})")
                 print(f"Raw data (expected: {self.__rawDataOriginal} actual: {self.getIcmpData()})")
                 print("---------------- End of debugging messages ----------------")
+
+
+
 
     # ################################################################################################################ #
     # Class IcmpHelperLibrary                                                                                          #
