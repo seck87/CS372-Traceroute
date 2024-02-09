@@ -225,39 +225,39 @@ class IcmpHelperLibrary:
             packetIdentifierSent = self.getPacketIdentifier()
             rawDataSent = self.getDataRaw()
 
-            # print("-----Debug Messages Start-----")
+            print("----- Start of debugging messages -----")
 
             # Check sequence number match and set the boolean value in reply packet
             if sequenceNumberReceived == sequenceNumberSent:
                 icmpReplyPacket.setIcmpSequenceNumber_isValid(True)
-                # print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Match)")
+                print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Match)")
             else:
                 icmpReplyPacket.setIcmpSequenceNumber_isValid(False)
                 # Discrepancy, share sent data with reply object
                 icmpReplyPacket.setSequenceNumberOriginal(sequenceNumberSent)
-                # print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Mismatch)")
+                print(f"Sequence Number (Expected: {sequenceNumberSent} Received: {sequenceNumberReceived} Result: Mismatch)")
 
             # Check packet identifier match and set the boolean value in reply packet
             if packetIdentifierReceived == packetIdentifierSent:
                 icmpReplyPacket.setIcmpIdentifier_isValid(True)
-                # print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Match)")
+                print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Match)")
             else:
                 icmpReplyPacket.setIcmpIdentifier_isValid(False)
                 # Discrepancy, share sent data with reply object
                 icmpReplyPacket.setPacketIdentifierOriginal(packetIdentifierSent)
-                # print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Mismatch)")
+                print(f"Packet Identifier (Expected: {packetIdentifierSent} Received: {packetIdentifierReceived} Result: Mismatch)")
 
             # Check raw data match and set the boolean value in reply packet
             if rawDataReceived == rawDataSent:
                 icmpReplyPacket.setIcmpData_isValid(True)
-                # print(f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Match)")
+                print(f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Match)")
             else:
                 icmpReplyPacket.setIcmpData_isValid(False)
                 # Discrepancy, share sent data with reply object
                 icmpReplyPacket.setRawDataOriginal(rawDataSent)
-                # print(f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Mismatch)")
+                print(f"Data (Expected: {rawDataSent} Received: {rawDataReceived} Result: Mismatch)")
 
-            # print("-----Debug Messages End-----")
+            print("------ End of debugging messages ------")
 
             # Set the valid data variable in the IcmpPacket_EchoReply class based the outcome of the data comparison,
             # after confirming the items received are the same as what was sent.
@@ -340,7 +340,12 @@ class IcmpHelperLibrary:
                     elif icmpType == 0:                         # Echo Reply
                         icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
                         self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
+
+                        #######################################################################
                         icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
+                        #######################################################################
+
+
                         return      # Echo reply is the end and therefore should return
 
                     else:
