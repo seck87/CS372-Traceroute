@@ -2,6 +2,7 @@ https://aws.amazon.com/what-is/icmp/
 https://www.educative.io/answers/what-is-the-python-struct-module
 https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol
 https://en.wikipedia.org/wiki/Ping_(networking_utility)
+https://en.wikipedia.org/wiki/File:Cmd-ping.png **Standart ping program output/report
 https://en.wikipedia.org/wiki/Traceroute
 https://datatracker.ietf.org/doc/html/rfc1739#page-5
 https://datatracker.ietf.org/doc/html/rfc1739#page-7
