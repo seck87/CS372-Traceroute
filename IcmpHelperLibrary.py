@@ -303,6 +303,9 @@ class IcmpHelperLibrary:
                 rtt = (timeReceived - timeSent) * 1000
                 rounded_rtt = round(rtt)
 
+                # Calculate the number of received packets
+                packetsReceived = 0
+
                 timeLeft = timeLeft - howLongInSelect
                 if timeLeft <= 0:
                     print("  *        *        *        *        *    Request timed out (By no remaining time left).")
@@ -334,6 +337,10 @@ class IcmpHelperLibrary:
                               )
 
                     elif icmpType == 0:                         # Echo Reply
+
+                        # Packet with a correct type arrives, it will be counted as not lost
+                        packetsReceived += 1
+
                         icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
                         self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
 
@@ -342,7 +349,7 @@ class IcmpHelperLibrary:
 
                         # For the average RTT, we'd want to only include valid echo replies since they represent
                         # successful "round trips".
-                        return rounded_rtt if icmpReplyPacket.isValidResponse() else None
+                        return rounded_rtt if icmpReplyPacket.isValidResponse() else None, packetsReceived
 
                     else:
                         print("error")
@@ -621,6 +628,8 @@ class IcmpHelperLibrary:
         print("sendIcmpEchoRequest Started...") if self.__DEBUG_IcmpHelperLibrary else 0
 
         rttContainerList = []
+        numberOfSentPackets = 0
+        numberOfReceivedPackets = 0
 
         for i in range(4):
             # Build packet
@@ -637,28 +646,33 @@ class IcmpHelperLibrary:
 
             # icmpPacket return received rtt here
             # sendEchoRequest() only returns rtt value if reply packet is valid () and icmpType is 0.
-            rtt = icmpPacket.sendEchoRequest()                                                # Build IP, return rtt
+            numberOfSentPackets += 1
+            rtt, packetsReceived = icmpPacket.sendEchoRequest()  # Build IP, return rtt
             rttContainerList.append(rtt)
+            numberOfReceivedPackets += packetsReceived
+
 
             icmpPacket.printIcmpPacketHeader_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             icmpPacket.printIcmpPacket_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             # we should be confirming values are correct, such as identifier and sequence number and data
 
         # None would be present in rttContainerList only if ICMP response code is 0 but packet is not valid
-        # Packet would not be valid if one of these does not match for sent and received packet: sequence number,
+        # Packet would not be valid if one of these items does not match for sent and received packet: sequence number,
         # packet identifier and raw data.
         if None not in rttContainerList:
-            self.printRttToConsole(rttContainerList, host)
+            self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, host)
         else:
             print("\nAn invalid packet has been received.")
 
 
 
-    def printRttToConsole(self, rttList, host):
-        print(f"\n----------- Ping statistics for {host}: -----------")
+    def printRttToConsole(self, rttList, sent, received, host):
+        print(f"\n-----------------------------------------------------------")
+        print(f"Ping statistics for {host}:")
+        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {sent - received}")
         print("Approximate round trip times in milli-seconds:")
-        print(f"Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
-        print(f"------------------------------------------------------------")
+        print(f"    Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
+        print(f"-----------------------------------------------------------")
 
 
     def __sendIcmpTraceRoute(self, host):
