@@ -279,7 +279,7 @@ class IcmpHelperLibrary:
             if len(self.__icmpTarget.strip()) <= 0 | len(self.__destinationIpAddress.strip()) <= 0:
                 self.setIcmpTarget("127.0.0.1")
 
-            print("Pinging (" + self.__icmpTarget + ") " + self.__destinationIpAddress)
+            print("\nPinging (" + self.__icmpTarget + ") " + self.__destinationIpAddress)
 
             mySocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
             mySocket.settimeout(self.__ipTimeout)
@@ -341,7 +341,10 @@ class IcmpHelperLibrary:
 
                         icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
 
-                        return rounded_rtt     # Echo reply is the end and therefore should return
+
+                        # For the average RTT, we'd want to only include valid echo replies since they represent
+                        # successful "round trips".
+                        return rounded_rtt if icmpReplyPacket.isValidResponse() else None
 
                     else:
                         print("error")
@@ -572,7 +575,7 @@ class IcmpHelperLibrary:
             # data is different, print to the console what the expected value and the actual value.
 
             if self.__isValidResponse is False:
-                print("--------------- Start of debugging messages ---------------")
+                print("\n--------------- Start of debugging messages ---------------")
                 print("Echo response is INVALID. Only the mismatched values are shown below. ")
                 if self.__IcmpSequenceNumber_isValid is False:
                     print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
@@ -583,13 +586,13 @@ class IcmpHelperLibrary:
                 print("---------------- End of debugging messages ----------------")
 
 
-            #if self.__isValidResponse is True:
-                # print("--------------- Start of debugging messages ---------------")
-                # print("Echo response is VALID.")
-                # print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
-                # print(f"Packet indentifier (expected: {self.__packetIdentifierOriginal} actual: {self.getIcmpIdentifier()})")
-                # print(f"Raw data (expected: {self.__rawDataOriginal} actual: {self.getIcmpData()})")
-                #print("---------------- End of debugging messages ----------------")
+            if self.__isValidResponse is True:
+                print("\n--------------- Start of debugging messages ---------------")
+                print("Echo response is VALID.")
+                print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
+                print(f"Packet indentifier (expected: {self.__packetIdentifierOriginal} actual: {self.getIcmpIdentifier()})")
+                print(f"Raw data (expected: {self.__rawDataOriginal} actual: {self.getIcmpData()})")
+                print("---------------- End of debugging messages ----------------")
 
 
     # ################################################################################################################ #
@@ -635,9 +638,9 @@ class IcmpHelperLibrary:
             icmpPacket.setIcmpTarget(host)
 
             # icmpPacket return received rtt here
+            # sendEchoRequest() only returns rtt value if reply packet is valid () and icmpType is 0.
             rtt = icmpPacket.sendEchoRequest()                                                # Build IP, return rtt
             rttContainerList.append(rtt)
-
 
             icmpPacket.printIcmpPacketHeader_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             icmpPacket.printIcmpPacket_hex() if self.__DEBUG_IcmpHelperLibrary else 0
@@ -648,10 +651,10 @@ class IcmpHelperLibrary:
 
 
     def printRttToConsole(self, rttList, host):
-        print(f"\nPing statistics for {host}:")
+        print(f"\n----------- Ping statistics for {host}: -----------")
         print("Approximate round trip times in milli-seconds:")
         print(f"Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
-
+        print(f"------------------------------------------------------------")
 
 
     def __sendIcmpTraceRoute(self, host):
@@ -689,7 +692,7 @@ def main():
 
     # Choose one of the following by uncommenting out the line
     icmpHelperPing.sendPing("209.233.126.254")
-    # icmpHelperPing.sendPing("www.google.com")
+    icmpHelperPing.sendPing("www.google.com")
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
