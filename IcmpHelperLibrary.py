@@ -565,7 +565,7 @@ class IcmpHelperLibrary:
 
             if self.__isValidResponse is False:
                 print("--------------- Start of debugging messages ---------------")
-                print("Echo response is INVALID. The mismatched values are shown below. ")
+                print("Echo response is INVALID. Only the mismatched values are shown below. ")
                 if self.__IcmpSequenceNumber_isValid is False:
                     print(f"Sequence number (expected: {self.__sequenceNumberOriginal} actual: {self.getIcmpSequenceNumber()})")
                 if self.__IcmpIdentifier_isValid is False:
