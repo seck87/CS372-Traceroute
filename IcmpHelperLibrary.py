@@ -273,6 +273,10 @@ class IcmpHelperLibrary:
             self.__dataRaw = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             self.__packAndRecalculateChecksum()
 
+
+        # sendEchoRequest should be refactored
+        # must include icmp response error codes
+
         def sendEchoRequest(self):
             if len(self.__icmpTarget.strip()) <= 0 | len(self.__destinationIpAddress.strip()) <= 0:
                 self.setIcmpTarget("127.0.0.1")
@@ -662,11 +666,9 @@ class IcmpHelperLibrary:
         # Packet would not be valid if one of these items does not match for sent and received packet: sequence number,
         # packet identifier and raw data.
 
-
-
-        if None not in rttContainerList:
+        if None not in rttContainerList:  # No invalid packets
             self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets, host)
-        else:
+        else:  # Invalid packets
             print("\n Debug Message: An invalid packet has been received.")
 
             # Number of invalid packets received, present as None in rttContainerList
@@ -683,14 +685,10 @@ class IcmpHelperLibrary:
             self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets,
                                    host)
 
-
-
-
-
     def printRttToConsole(self, rttList, sent, received, lost, host):
         print(f"\n-----------------------------------------------------------")
         print(f"Ping statistics for {host}:")
-        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}")
+        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}, Packet Loss Rate = {round(lost/sent)}% ")
         print("Approximate round trip times in milli-seconds:")
         print(f"    Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
         print(f"-----------------------------------------------------------")
