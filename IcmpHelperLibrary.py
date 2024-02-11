@@ -661,10 +661,29 @@ class IcmpHelperLibrary:
         # None would be present in rttContainerList only if ICMP response code is 0 but packet is not valid
         # Packet would not be valid if one of these items does not match for sent and received packet: sequence number,
         # packet identifier and raw data.
+
+
+
         if None not in rttContainerList:
             self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets, host)
         else:
-            print("\nAn invalid packet has been received.")
+            print("\n Debug Message: An invalid packet has been received.")
+
+            # Number of invalid packets received, present as None in rttContainerList
+            numberOfNone = 0
+
+            # Count and remove them from the rttContainerList
+            while None in rttContainerList:
+                numberOfNone += 1
+                rttContainerList.remove(None)
+
+            # Add invalid packets to the numberOfLostPackets
+            numberOfLostPackets += numberOfNone
+
+            self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets,
+                                   host)
+
+
 
 
 
