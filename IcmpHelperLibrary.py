@@ -274,10 +274,8 @@ class IcmpHelperLibrary:
             self.__packAndRecalculateChecksum()
 
 
-        # sendEchoRequest should be refactored
-        # must include icmp response error codes
-
-        def sendEchoRequest(self):
+        # name change for function for refactoring
+        def sendEchoRequest_x(self):
             if len(self.__icmpTarget.strip()) <= 0 | len(self.__destinationIpAddress.strip()) <= 0:
                 self.setIcmpTarget("127.0.0.1")
 
@@ -297,7 +295,7 @@ class IcmpHelperLibrary:
                 howLongInSelect = (endSelect - startedSelect)
                 if whatReady[0] == []:  # Timeout
                     print("  *        *        *        *        *    Request timed out.")
-                    return None, 0, 1
+                    return None, 1, 1
                 recvPacket, addr = mySocket.recvfrom(1024)  # recvPacket - bytes object representing data received
                 # addr  - address of socket sending data
                 timeReceived = time.time()
@@ -362,6 +360,69 @@ class IcmpHelperLibrary:
             finally:
                 mySocket.close()
                 return rounded_rtt, 1, 0
+
+
+        def sendEchoRequest(self):
+            if not self.__icmpTarget or not self.__destinationIpAddress:
+                self.setIcmpTarget("127.0.0.1")
+
+            print(f"\nPinging ({self.__icmpTarget}) {self.__destinationIpAddress}")
+
+            with socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) as mySocket:
+                mySocket.settimeout(self.__ipTimeout)
+                mySocket.bind(("", 0))
+                mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', self.getTtl()))
+                try:
+                    self.__sendPacket(mySocket)
+                    return self.__receiveAndProcessReply(mySocket)
+                except timeout:
+                    print("  *        *        *        *        *    Request timed out (By Exception).")
+                    return None, 1, 1
+
+        def __sendPacket(self, mySocket):
+            mySocket.sendto(b''.join([self.__header, self.__data]), (self.__destinationIpAddress, 0))
+
+        def __receiveAndProcessReply(self, mySocket):
+            start_time = time.time()
+            recvPacket, addr = mySocket.recvfrom(1024)
+            timeReceived = time.time()
+            icmpType, icmpCode = recvPacket[20:22]
+
+            # Check different ICMP types
+            if icmpType == 0:  # Echo Reply
+                return self.__handleEchoReply(recvPacket, addr, timeReceived, start_time)
+            else:
+                return self.__handleIcmpError(icmpType, icmpCode, addr, start_time, timeReceived)
+
+        def __handleEchoReply(self, recvPacket, addr, timeReceived, start_time):
+            icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
+            self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
+            icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
+
+            if icmpReplyPacket.isValidResponse():
+                rtt = self.__calculateRtt(recvPacket, timeReceived)
+                return rtt, 1, 0
+            else:  # packet not valid
+                return None, 1, 1
+
+        def __handleIcmpError(self, icmpType, icmpCode, addr, start_time, timeReceived):
+            errorMessage = self.__getIcmpErrorMessage(icmpType, icmpCode)
+            print(f"  TTL={self.getTtl()}    RTT={(timeReceived - start_time) * 1000:.0f} ms    {errorMessage}    {addr[0]}")
+            return None, 1, 1
+
+        def __calculateRtt(self, recvPacket, timeReceived):
+            bytes = struct.calcsize("d")
+            timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
+            rtt = (timeReceived - timeSent) * 1000
+            return round(rtt)
+
+        def __getIcmpErrorMessage(self, icmpType, icmpCode):
+            if icmpType == 11:
+                return "Time Exceeded"
+            elif icmpType == 3:
+                return "Destination Unreachable"
+            else:
+                return f"Type={icmpType} Code={icmpCode}"
 
         def printIcmpPacketHeader_hex(self):
             print("Header Size: ", len(self.__header))
@@ -666,10 +727,10 @@ class IcmpHelperLibrary:
         # Packet would not be valid if one of these items does not match for sent and received packet: sequence number,
         # packet identifier and raw data.
 
-        if None not in rttContainerList:  # No invalid packets
+        if rttContainerList and None not in rttContainerList:  # No invalid packets
             self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets, host)
         else:  # Invalid packets
-            print("\n Debug Message: An invalid packet has been received.")
+            print("Debug Message: An invalid packet has been received.")
 
             # Number of invalid packets received, present as None in rttContainerList
             numberOfNone = 0
@@ -678,6 +739,10 @@ class IcmpHelperLibrary:
             while None in rttContainerList:
                 numberOfNone += 1
                 rttContainerList.remove(None)
+
+            if not rttContainerList:
+                self.notPrintRttToConsole(host)
+                return
 
             # Add invalid packets to the numberOfLostPackets
             numberOfLostPackets += numberOfNone
@@ -688,11 +753,16 @@ class IcmpHelperLibrary:
     def printRttToConsole(self, rttList, sent, received, lost, host):
         print(f"\n-----------------------------------------------------------")
         print(f"Ping statistics for {host}:")
-        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}, Packet Loss Rate = {round(lost/sent)}% ")
+        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}, Packet Loss Rate = {(lost/sent) * 100}% ")
         print("Approximate round trip times in milli-seconds:")
         print(f"    Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
         print(f"-----------------------------------------------------------")
 
+    def notPrintRttToConsole(self, host):
+        print(f"\n-----------------------------------------------------------")
+        print(f"Ping statistics for {host}:")
+        print("All packets are lost or invalid.")
+        print(f"-----------------------------------------------------------")
 
     def __sendIcmpTraceRoute(self, host):
         print("sendIcmpTraceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
