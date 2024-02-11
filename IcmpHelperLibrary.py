@@ -293,6 +293,7 @@ class IcmpHelperLibrary:
                 howLongInSelect = (endSelect - startedSelect)
                 if whatReady[0] == []:  # Timeout
                     print("  *        *        *        *        *    Request timed out.")
+                    return None, 0, 1
                 recvPacket, addr = mySocket.recvfrom(1024)  # recvPacket - bytes object representing data received
                 # addr  - address of socket sending data
                 timeReceived = time.time()
@@ -303,12 +304,10 @@ class IcmpHelperLibrary:
                 rtt = (timeReceived - timeSent) * 1000
                 rounded_rtt = round(rtt)
 
-                # Calculate the number of received packets
-                packetsReceived = 0
-
                 timeLeft = timeLeft - howLongInSelect
                 if timeLeft <= 0:
                     print("  *        *        *        *        *    Request timed out (By no remaining time left).")
+                    return None, 0, 1
 
                 else:
                     # Fetch the ICMP type and code from the received packet
@@ -324,6 +323,7 @@ class IcmpHelperLibrary:
                                     addr[0]
                                 )
                               )
+                        return None, 0, 1
 
                     elif icmpType == 3:                         # Destination Unreachable
                         print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d    %s" %
@@ -336,27 +336,28 @@ class IcmpHelperLibrary:
                                   )
                               )
 
-                    elif icmpType == 0:                         # Echo Reply
+                        return None, 0, 1
 
-                        # Packet with a correct type arrives, it will be counted as not lost
-                        packetsReceived += 1
+                    elif icmpType == 0:                         # Echo Reply
 
                         icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
                         self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
 
                         icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
 
-
                         # For the average RTT, we'd want to only include valid echo replies since they represent
                         # successful "round trips".
-                        return rounded_rtt if icmpReplyPacket.isValidResponse() else None, packetsReceived
+                        return rounded_rtt, 1, 0 if icmpReplyPacket.isValidResponse() else None, 1, 1
 
                     else:
                         print("error")
+                        return None, 1, 0
             except timeout:
                 print("  *        *        *        *        *    Request timed out (By Exception).")
+                return None, 1, 1
             finally:
                 mySocket.close()
+                return rounded_rtt, 1, 0
 
         def printIcmpPacketHeader_hex(self):
             print("Header Size: ", len(self.__header))
@@ -630,6 +631,7 @@ class IcmpHelperLibrary:
         rttContainerList = []
         numberOfSentPackets = 0
         numberOfReceivedPackets = 0
+        numberOfLostPackets = 0
 
         for i in range(4):
             # Build packet
@@ -647,10 +649,10 @@ class IcmpHelperLibrary:
             # icmpPacket return received rtt here
             # sendEchoRequest() only returns rtt value if reply packet is valid () and icmpType is 0.
             numberOfSentPackets += 1
-            rtt, packetsReceived = icmpPacket.sendEchoRequest()  # Build IP, return rtt
+            rtt, packetsReceived, packetsLost = icmpPacket.sendEchoRequest()  # Build IP, return rtt
             rttContainerList.append(rtt)
             numberOfReceivedPackets += packetsReceived
-
+            numberOfLostPackets += packetsLost
 
             icmpPacket.printIcmpPacketHeader_hex() if self.__DEBUG_IcmpHelperLibrary else 0
             icmpPacket.printIcmpPacket_hex() if self.__DEBUG_IcmpHelperLibrary else 0
@@ -660,16 +662,16 @@ class IcmpHelperLibrary:
         # Packet would not be valid if one of these items does not match for sent and received packet: sequence number,
         # packet identifier and raw data.
         if None not in rttContainerList:
-            self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, host)
+            self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets, host)
         else:
             print("\nAn invalid packet has been received.")
 
 
 
-    def printRttToConsole(self, rttList, sent, received, host):
+    def printRttToConsole(self, rttList, sent, received, lost, host):
         print(f"\n-----------------------------------------------------------")
         print(f"Ping statistics for {host}:")
-        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {sent - received}")
+        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}")
         print("Approximate round trip times in milli-seconds:")
         print(f"    Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
         print(f"-----------------------------------------------------------")
@@ -710,7 +712,7 @@ def main():
 
     # Choose one of the following by uncommenting out the line
     icmpHelperPing.sendPing("209.233.126.254")
-    icmpHelperPing.sendPing("www.google.com")
+    # icmpHelperPing.sendPing("www.google.com")
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
