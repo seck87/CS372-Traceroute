@@ -730,7 +730,6 @@ class IcmpHelperLibrary:
         if rttContainerList and None not in rttContainerList:  # No invalid packets
             self.printRttToConsole(rttContainerList, numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets, host)
         else:  # Invalid packets
-            print("Debug Message: An invalid packet has been received.")
 
             # Number of invalid packets received, present as None in rttContainerList
             numberOfNone = 0
@@ -741,7 +740,8 @@ class IcmpHelperLibrary:
                 rttContainerList.remove(None)
 
             if not rttContainerList:
-                self.notPrintRttToConsole(host)
+                self.notPrintRttToConsole(numberOfSentPackets, numberOfReceivedPackets, numberOfLostPackets,
+                                   host)
                 return
 
             # Add invalid packets to the numberOfLostPackets
@@ -753,15 +753,16 @@ class IcmpHelperLibrary:
     def printRttToConsole(self, rttList, sent, received, lost, host):
         print(f"\n-----------------------------------------------------------")
         print(f"Ping statistics for {host}:")
-        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}, Packet Loss Rate = {(lost/sent) * 100}% ")
+        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}, Packet Loss Rate = {round(lost/sent) * 100}% ")
         print("Approximate round trip times in milli-seconds:")
         print(f"    Minimum = {min(rttList)}, Maximum = {max(rttList)}, Average = {round(sum(rttList)/len(rttList))}")
         print(f"-----------------------------------------------------------")
 
-    def notPrintRttToConsole(self, host):
+    def notPrintRttToConsole(self, sent, received, lost, host):
         print(f"\n-----------------------------------------------------------")
         print(f"Ping statistics for {host}:")
-        print("All packets are lost or invalid.")
+        print(f"    Packets: Sent = {sent}, Received = {received}, Lost = {lost}, Packet Loss Rate = {round(lost/sent) * 100}% ")
+        print("There was no calculation of the approximate round trip time")
         print(f"-----------------------------------------------------------")
 
     def __sendIcmpTraceRoute(self, host):
@@ -798,9 +799,9 @@ def main():
 
 
     # Choose one of the following by uncommenting out the line
-    icmpHelperPing.sendPing("209.233.126.254")
+    # icmpHelperPing.sendPing("209.233.126.254")
     # icmpHelperPing.sendPing("www.google.com")
-    # icmpHelperPing.sendPing("gaia.cs.umass.edu")
+    icmpHelperPing.sendPing("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
 
