@@ -65,7 +65,7 @@ class IcmpHelperLibrary:
         __packetIdentifier = 0          # Valid values are 0-65535 (unsigned short, 16 bits)
         __packetSequenceNumber = 0      # Valid values are 0-65535 (unsigned short, 16 bits)
         __ipTimeout = 30
-        __ttl = 255                     # Time to live
+        __ttl = 5                     # Time to live
 
         __DEBUG_IcmpPacket = False      # Allows for debug output
 
@@ -377,7 +377,7 @@ class IcmpHelperLibrary:
                     return self.__receiveAndProcessReply(mySocket)
                 except timeout:
                     print("  *        *        *        *        *    Request timed out (By Exception).")
-                    return None, 1, 1
+                    return None, 0, 1
 
         def __sendPacket(self, mySocket):
             mySocket.sendto(b''.join([self.__header, self.__data]), (self.__destinationIpAddress, 0))
@@ -403,12 +403,12 @@ class IcmpHelperLibrary:
                 rtt = self.__calculateRtt(recvPacket, timeReceived)
                 return rtt, 1, 0
             else:  # packet not valid
-                return None, 1, 1
+                return None, 0, 1
 
         def __handleIcmpError(self, icmpType, icmpCode, addr, start_time, timeReceived):
             errorMessage = self.__getIcmpErrorMessage(icmpType, icmpCode)
             print(f"  TTL={self.getTtl()}    RTT={(timeReceived - start_time) * 1000:.0f} ms    {errorMessage}    {addr[0]}")
-            return None, 1, 1
+            return None, 0, 1
 
         def __calculateRtt(self, recvPacket, timeReceived):
             bytes = struct.calcsize("d")
@@ -866,9 +866,9 @@ def main():
 
 
     # Choose one of the following by uncommenting out the line
-    # icmpHelperPing.sendPing("209.233.126.254")
+    icmpHelperPing.sendPing("209.233.126.254")
     # icmpHelperPing.sendPing("www.google.com")
-    icmpHelperPing.sendPing("gaia.cs.umass.edu")
+    # icmpHelperPing.sendPing("gaia.cs.umass.edu")
     # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
 
