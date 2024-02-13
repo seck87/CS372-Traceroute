@@ -65,9 +65,12 @@ class IcmpHelperLibrary:
         __packetIdentifier = 0          # Valid values are 0-65535 (unsigned short, 16 bits)
         __packetSequenceNumber = 0      # Valid values are 0-65535 (unsigned short, 16 bits)
         __ipTimeout = 30
-        __ttl = 5                     # Time to live
+        __ttl = 255                     # Time to live
 
         __DEBUG_IcmpPacket = False      # Allows for debug output
+        __address = None
+        __Rtt = None
+        __Timeout = None
 
         # ############################################################################################################ #
         # IcmpPacket Class Getters                                                                                     #
@@ -99,6 +102,15 @@ class IcmpHelperLibrary:
 
         def getTtl(self):
             return self.__ttl
+
+        def getIPAdress(self):
+            return self.__address[0]
+
+        def getRtt(self):
+            return self.__Rtt
+
+        def checkTimeout(self):
+            return self.__Timeout
 
         # ############################################################################################################ #
         # IcmpPacket Class Setters                                                                                     #
@@ -377,6 +389,7 @@ class IcmpHelperLibrary:
                     return self.__receiveAndProcessReply(mySocket)
                 except timeout:
                     print("  *        *        *        *        *    Request timed out (By Exception).")
+                    self.__Timeout = True
                     return None, 0, 1
 
         def __sendPacket(self, mySocket):
@@ -385,8 +398,15 @@ class IcmpHelperLibrary:
         def __receiveAndProcessReply(self, mySocket):
             start_time = time.time()
             recvPacket, addr = mySocket.recvfrom(1024)
+            self.__address = addr
             timeReceived = time.time()
             icmpType, icmpCode = recvPacket[20:22]
+
+            # Assign values to object
+            self.__icmpType = icmpType
+            self.__icmpCode = icmpCode
+
+            self.__Rtt = round((timeReceived - start_time) * 1000)
 
             # Check different ICMP types
             if icmpType == 0:  # Echo Reply
@@ -398,9 +418,9 @@ class IcmpHelperLibrary:
             icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
             self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
             icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
+            rtt = self.__calculateRtt(recvPacket, timeReceived)
 
             if icmpReplyPacket.isValidResponse():
-                rtt = self.__calculateRtt(recvPacket, timeReceived)
                 return rtt, 1, 0
             else:  # packet not valid
                 return None, 0, 1
@@ -836,6 +856,57 @@ class IcmpHelperLibrary:
         print("sendIcmpTraceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
         # Build code for trace route here
 
+        print(f"Tracing route to [{host}] over a maximum of 30 hops:")
+
+        for ttl in range(1, 31):
+
+            # Build packet
+            icmpPacket = IcmpHelperLibrary.IcmpPacket()
+
+            # Set TTL
+            icmpPacket.setTtl(ttl)
+
+            randomIdentifier = (os.getpid() & 0xffff)  # Get as 16 bit number - Limit based on ICMP header standards
+            # Some PIDs are larger than 16 bit
+
+            packetIdentifier = randomIdentifier
+            packetSequenceNumber = ttl
+            icmpPacket.buildPacket_echoRequest(packetIdentifier, packetSequenceNumber)  # Build ICMP for IP payload
+            icmpPacket.setIcmpTarget(host)
+
+            # Send the packet and retrieve icmp type and code
+            icmpPacket.sendEchoRequest()
+
+            # What happens if we receive nothing????????????
+            # For hops that do not respond (like 8 and 16 in the screenshot), you can record a * without identifying
+            # the specific ICMP type and code, since no response was received. You don't need to identify the type and
+            # code for no responses. (source: https://edstem.org/us/courses/51611/discussion/4315409)
+            if icmpPacket.checkTimeout() is True:
+                print(f"Hop = {hop}, RTT = * ms, ICMP Type = *, ICMP Code = *, IP Address = *, Request timed out")
+                continue
+
+            # Show hops
+            hop = ttl
+            # Show RTTs
+            rtt = icmpPacket.getRtt()
+            # Show icmp type and code
+            icmpType = icmpPacket.getIcmpType()
+            icmpCode = icmpPacket.getIcmpCode()
+            # Show IP adress
+            ipAdress = icmpPacket.getIPAdress()
+
+            # Print information to screen
+            print(f"Hop = {hop}, RTT = {rtt} ms, ICMP Type = {icmpType}, ICMP Code = {icmpCode}, IP Address = {ipAdress}")
+
+            # Stop the loop if icmpType is 0 (echo response from target)
+            if icmpType == 0:
+                break
+
+
+
+
+
+
     # ################################################################################################################ #
     # IcmpHelperLibrary Public Functions                                                                               #
     #                                                                                                                  #
@@ -864,12 +935,11 @@ def main():
 
     icmpHelperPing = IcmpHelperLibrary()
 
-
     # Choose one of the following by uncommenting out the line
-    icmpHelperPing.sendPing("209.233.126.254")
+    # icmpHelperPing.sendPing("209.233.126.254")
     # icmpHelperPing.sendPing("www.google.com")
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
-    # icmpHelperPing.traceRoute("164.151.129.20")
+    icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
 
 
