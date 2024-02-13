@@ -71,6 +71,7 @@ class IcmpHelperLibrary:
         __address = None
         __Rtt = None
         __Timeout = None
+        __traceRouteFlag = False        # Functions will not print if called by traceroute
 
         # ############################################################################################################ #
         # IcmpPacket Class Getters                                                                                     #
@@ -143,6 +144,9 @@ class IcmpHelperLibrary:
 
         def setTtl(self, ttl):
             self.__ttl = ttl
+
+        def setTraceRouteFlag(self, boolean):
+            self.__traceRouteFlag = boolean
 
         # ############################################################################################################ #
         # IcmpPacket Class Private Functions                                                                           #
@@ -374,11 +378,12 @@ class IcmpHelperLibrary:
                 return rounded_rtt, 1, 0  # this function is not used, ignore the warning
 
 
-        def sendEchoRequest(self):
+        def sendEchoRequest(self, printOption):
             if not self.__icmpTarget or not self.__destinationIpAddress:
                 self.setIcmpTarget("127.0.0.1")
 
-            print(f"\nPinging ({self.__icmpTarget}) {self.__destinationIpAddress}")
+            if printOption:
+                print(f"\nPinging ({self.__icmpTarget}) {self.__destinationIpAddress}")
 
             with socket(AF_INET, SOCK_RAW, IPPROTO_ICMP) as mySocket:
                 mySocket.settimeout(self.__ipTimeout)
@@ -410,14 +415,15 @@ class IcmpHelperLibrary:
 
             # Check different ICMP types
             if icmpType == 0:  # Echo Reply
-                return self.__handleEchoReply(recvPacket, addr, timeReceived, start_time)
+                return self.__handleEchoReply(recvPacket, addr, timeReceived, start_time, not self.__traceRouteFlag)
             else:
-                return self.__handleIcmpError(icmpType, icmpCode, addr, start_time, timeReceived)
+                return self.__handleIcmpError(icmpType, icmpCode, addr, start_time, timeReceived, not self.__traceRouteFlag)
 
-        def __handleEchoReply(self, recvPacket, addr, timeReceived, start_time):
+        def __handleEchoReply(self, recvPacket, addr, timeReceived, start_time, printBoolean):
             icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
             self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
-            icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
+            if printBoolean:
+                icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
             rtt = self.__calculateRtt(recvPacket, timeReceived)
 
             if icmpReplyPacket.isValidResponse():
@@ -425,9 +431,10 @@ class IcmpHelperLibrary:
             else:  # packet not valid
                 return None, 0, 1
 
-        def __handleIcmpError(self, icmpType, icmpCode, addr, start_time, timeReceived):
-            errorMessage = self.__getIcmpErrorMessage(icmpType, icmpCode)
-            print(f"  TTL={self.getTtl()}    RTT={(timeReceived - start_time) * 1000:.0f} ms    {errorMessage}    {addr[0]}")
+        def __handleIcmpError(self, icmpType, icmpCode, addr, start_time, timeReceived, printBoolean):
+            if printBoolean:
+                errorMessage = self.__getIcmpErrorMessage(icmpType, icmpCode)
+                print(f"  TTL={self.getTtl()}    RTT={(timeReceived - start_time) * 1000:.0f} ms    {errorMessage}    {addr[0]}")
             return None, 0, 1
 
         def __calculateRtt(self, recvPacket, timeReceived):
@@ -801,7 +808,7 @@ class IcmpHelperLibrary:
             # icmpPacket return received rtt here
             # sendEchoRequest() only returns rtt value if reply packet is valid () and icmpType is 0.
             numberOfSentPackets += 1
-            rtt, packetsReceived, packetsLost = icmpPacket.sendEchoRequest()  # Build IP, return rtt
+            rtt, packetsReceived, packetsLost = icmpPacket.sendEchoRequest(True)  # Build IP, return rtt
             rttContainerList.append(rtt)
             numberOfReceivedPackets += packetsReceived
             numberOfLostPackets += packetsLost
@@ -866,6 +873,9 @@ class IcmpHelperLibrary:
             # Set TTL
             icmpPacket.setTtl(ttl)
 
+            # Set traceroute flag on object, True = not print, False = print
+            icmpPacket.setTraceRouteFlag(True)
+
             randomIdentifier = (os.getpid() & 0xffff)  # Get as 16 bit number - Limit based on ICMP header standards
             # Some PIDs are larger than 16 bit
 
@@ -875,7 +885,10 @@ class IcmpHelperLibrary:
             icmpPacket.setIcmpTarget(host)
 
             # Send the packet and retrieve icmp type and code
-            icmpPacket.sendEchoRequest()
+            icmpPacket.sendEchoRequest(False)
+
+            # Show hops
+            hop = ttl
 
             # What happens if we receive nothing????????????
             # For hops that do not respond (like 8 and 16 in the screenshot), you can record a * without identifying
@@ -885,8 +898,6 @@ class IcmpHelperLibrary:
                 print(f"Hop = {hop}, RTT = * ms, ICMP Type = *, ICMP Code = *, IP Address = *, Request timed out")
                 continue
 
-            # Show hops
-            hop = ttl
             # Show RTTs
             rtt = icmpPacket.getRtt()
             # Show icmp type and code
@@ -900,12 +911,8 @@ class IcmpHelperLibrary:
 
             # Stop the loop if icmpType is 0 (echo response from target)
             if icmpType == 0:
+                print("\nTrace complete.\n")
                 break
-
-
-
-
-
 
     # ################################################################################################################ #
     # IcmpHelperLibrary Public Functions                                                                               #

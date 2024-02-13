@@ -20,6 +20,15 @@ https://www.w3schools.com/python/ref_func_round.asp
 https://stackoverflow.com/questions/5306756/how-to-print-a-percentage-value
 https://www.reddit.com/r/learnpython/comments/4lo0sj/how_to_make_a_dictionary_with_intervals_as_keys/
 https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes-5
+https://www.geeksforgeeks.org/traceroute-implementation-on-python/
+https://www.hellotech.com/guide/for/how-to-run-a-traceroute-windows-10
+https://stackoverflow.com/questions/4271740/how-can-i-use-python-to-get-the-system-hostname
+https://stackoverflow.com/questions/2575760/python-lookup-hostname-from-ip-with-1-second-timeout
+https://edstem.org/us/courses/51611/discussion/4315409
+https://edstem.org/us/courses/51611/discussion/4277060
+https://www.programiz.com/python-programming/break-continue
+
+
 
 
 
