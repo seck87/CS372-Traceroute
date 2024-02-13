@@ -864,7 +864,7 @@ class IcmpHelperLibrary:
         print("sendIcmpTraceRoute Started...") if self.__DEBUG_IcmpHelperLibrary else 0
         # Build code for trace route here
 
-        print(f"Tracing route to [{host}] over a maximum of 30 hops:")
+        print(f"Tracing route to [{host}] over a maximum of 30 hops:\n")
 
         for ttl in range(1, 31):
 
@@ -896,7 +896,10 @@ class IcmpHelperLibrary:
             # the specific ICMP type and code, since no response was received. You don't need to identify the type and
             # code for no responses. (source: https://edstem.org/us/courses/51611/discussion/4315409)
             if icmpPacket.checkTimeout() is True:
-                print(f"Hop = {hop}, RTT = * ms, ICMP Type = *, ICMP Code = *, IP Address = *, Request timed out")
+                # print(f"Hop = {hop}, RTT = * ms, ICMP Type = *, ICMP Code = *, IP Address = *, Request timed out")
+                star = "*"
+                timedOut = "Request timed out"
+                print(f"Hop = {hop : >2}, RTT = {star : >4} ms, ICMP Type = {star : >2}, ICMP Code = {star : >2}, IP Address = {timedOut : >18}")
                 continue
 
             # Show RTTs
@@ -908,7 +911,7 @@ class IcmpHelperLibrary:
             ipAdress = icmpPacket.getIPAdress()
 
             # Print information to screen
-            print(f"Hop = {hop}, RTT = {rtt} ms, ICMP Type = {icmpType}, ICMP Code = {icmpCode}, IP Address = {ipAdress}")
+            print(f"Hop = {hop : >2}, RTT = {rtt : >4} ms, ICMP Type = {icmpType : >2}, ICMP Code = {icmpCode : >2}, IP Address = {ipAdress : >18}")
 
             # Stop the loop if icmpType is 0 (echo response from target)
             if icmpType == 0:
