@@ -18,6 +18,10 @@ https://www.learndatasci.com/solutions/python-valueerror-too-many-values-unpack/
 https://www.w3schools.com/python/python_try_except.asp
 https://www.w3schools.com/python/ref_func_round.asp
 https://stackoverflow.com/questions/5306756/how-to-print-a-percentage-value
+https://www.reddit.com/r/learnpython/comments/4lo0sj/how_to_make_a_dictionary_with_intervals_as_keys/
+https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes-5
+
+
 
 
 
