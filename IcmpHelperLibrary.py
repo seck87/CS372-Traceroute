@@ -393,8 +393,9 @@ class IcmpHelperLibrary:
                     self.__sendPacket(mySocket)
                     return self.__receiveAndProcessReply(mySocket)
                 except timeout:
-                    print("  *        *        *        *        *    Request timed out (By Exception).")
                     self.__Timeout = True
+                    if not self.__traceRouteFlag:
+                        print("  *        *        *        *        *    Request timed out (By Exception).")
                     return None, 0, 1
 
         def __sendPacket(self, mySocket):
