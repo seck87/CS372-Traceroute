@@ -1,3 +1,43 @@
+# Name: Murat Seckin Kuvandik
+# OSU Email: kuvandim@oregonstate.edu
+# Course: CS372
+# Citations for the following code structure:
+# Date: 02/14/2024
+# Copied from /OR/ Adapted from /OR/ Based on:
+# Textbook: Computer Networking: A Top-Down Approach 8th Edition, James F. Kurose, Keith W. Ross
+# Source URLs:
+# https://www.cloudflare.com/learning/network-layer/what-is-a-computer-port/#:~:text=What%20are%20the%20different%20port,File%20Transfer%20Protocol%20(FTP).
+# https://aws.amazon.com/what-is/icmp/
+# https://www.educative.io/answers/what-is-the-python-struct-module
+# https://en.wikipedia.org/wiki/Internet_Control_Message_Protocol
+# https://en.wikipedia.org/wiki/Ping_(networking_utility)
+# https://en.wikipedia.org/wiki/File:Cmd-ping.png **Standart ping program output/report
+# https://en.wikipedia.org/wiki/Traceroute
+# https://datatracker.ietf.org/doc/html/rfc1739#page-5
+# https://datatracker.ietf.org/doc/html/rfc1739#page-7
+# https://docs.python.org/3/library/struct.html
+# https://inspector.dev/how-to-round-numbers-in-python-fast-tips/#:~:text=The%20simplest%20way%20to%20round,rounded%20to%20the%20nearest%20integer.
+# https://flexiple.com/python/python-new-line
+# https://www.sciencedirect.com/topics/computer-science/packet-loss-rate#:~:text=The%20reliability%20of%20a%20communication,total%20number%20of%20packets%20sent.
+# https://canvas.oregonstate.edu/courses/1946206/pages/programming-project-primer-traceroute-faq?module_item_id=23965635
+# https://edstem.org/us/courses/51611/discussion/4241558
+# https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml
+# https://www.learndatasci.com/solutions/python-valueerror-too-many-values-unpack/
+# https://www.w3schools.com/python/python_try_except.asp
+# https://www.w3schools.com/python/ref_func_round.asp
+# https://stackoverflow.com/questions/5306756/how-to-print-a-percentage-value
+# https://www.reddit.com/r/learnpython/comments/4lo0sj/how_to_make_a_dictionary_with_intervals_as_keys/
+# https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes-5
+# https://www.geeksforgeeks.org/traceroute-implementation-on-python/
+# https://www.hellotech.com/guide/for/how-to-run-a-traceroute-windows-10
+# https://stackoverflow.com/questions/4271740/how-can-i-use-python-to-get-the-system-hostname
+# https://stackoverflow.com/questions/2575760/python-lookup-hostname-from-ip-with-1-second-timeout
+# https://edstem.org/us/courses/51611/discussion/4315409
+# https://edstem.org/us/courses/51611/discussion/4277060
+# https://www.programiz.com/python-programming/break-continue
+# https://www.tutorialspoint.com/how-to-align-text-strings-using-python
+# skeleton code provided at: https://canvas.oregonstate.edu/courses/1946206/assignments/9512468?module_item_id=23965633
+
 # #################################################################################################################### #
 # Imports                                                                                                              #
 #                                                                                                                      #
@@ -65,7 +105,7 @@ class IcmpHelperLibrary:
         __packetIdentifier = 0          # Valid values are 0-65535 (unsigned short, 16 bits)
         __packetSequenceNumber = 0      # Valid values are 0-65535 (unsigned short, 16 bits)
         __ipTimeout = 30
-        __ttl = 255                     # Time to live
+        __ttl = 5                     # Time to live
 
         __DEBUG_IcmpPacket = False      # Allows for debug output
         __address = None
@@ -288,95 +328,6 @@ class IcmpHelperLibrary:
             self.setPacketSequenceNumber(packetSequenceNumber)
             self.__dataRaw = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             self.__packAndRecalculateChecksum()
-
-
-        # name change for function for refactoring
-        def sendEchoRequest_x(self):
-            if len(self.__icmpTarget.strip()) <= 0 | len(self.__destinationIpAddress.strip()) <= 0:
-                self.setIcmpTarget("127.0.0.1")
-
-            print("\nPinging (" + self.__icmpTarget + ") " + self.__destinationIpAddress)
-
-            mySocket = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)
-            mySocket.settimeout(self.__ipTimeout)
-            mySocket.bind(("", 0))
-            mySocket.setsockopt(IPPROTO_IP, IP_TTL, struct.pack('I', self.getTtl()))  # Unsigned int - 4 bytes
-            try:
-                mySocket.sendto(b''.join([self.__header, self.__data]), (self.__destinationIpAddress, 0))
-                timeLeft = 30
-                pingStartTime = time.time()
-                startedSelect = time.time()
-                whatReady = select.select([mySocket], [], [], timeLeft)
-                endSelect = time.time()
-                howLongInSelect = (endSelect - startedSelect)
-                if whatReady[0] == []:  # Timeout
-                    print("  *        *        *        *        *    Request timed out.")
-                    return None, 1, 1
-                recvPacket, addr = mySocket.recvfrom(1024)  # recvPacket - bytes object representing data received
-                # addr  - address of socket sending data
-                timeReceived = time.time()
-
-                # Calculate RTT by using the formula in printResultToConsole function
-                bytes = struct.calcsize("d")
-                timeSent = struct.unpack("d", recvPacket[28:28 + bytes])[0]
-                rtt = (timeReceived - timeSent) * 1000
-                rounded_rtt = round(rtt)
-
-                timeLeft = timeLeft - howLongInSelect
-                if timeLeft <= 0:
-                    print("  *        *        *        *        *    Request timed out (By no remaining time left).")
-                    return None, 0, 1
-
-                else:
-                    # Fetch the ICMP type and code from the received packet
-                    icmpType, icmpCode = recvPacket[20:22]
-
-                    if icmpType == 11:                          # Time Exceeded
-                        print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d    %s" %
-                                (
-                                    self.getTtl(),
-                                    (timeReceived - pingStartTime) * 1000,
-                                    icmpType,
-                                    icmpCode,
-                                    addr[0]
-                                )
-                              )
-                        return None, 0, 1
-
-                    elif icmpType == 3:                         # Destination Unreachable
-                        print("  TTL=%d    RTT=%.0f ms    Type=%d    Code=%d    %s" %
-                                  (
-                                      self.getTtl(),
-                                      (timeReceived - pingStartTime) * 1000,
-                                      icmpType,
-                                      icmpCode,
-                                      addr[0]
-                                  )
-                              )
-
-                        return None, 0, 1
-
-                    elif icmpType == 0:                         # Echo Reply
-
-                        icmpReplyPacket = IcmpHelperLibrary.IcmpPacket_EchoReply(recvPacket)
-                        self.__validateIcmpReplyPacketWithOriginalPingData(icmpReplyPacket)
-
-                        icmpReplyPacket.printResultToConsole(self.getTtl(), timeReceived, addr)
-
-                        # For the average RTT, we'd want to only include valid echo replies since they represent
-                        # successful "round trips".
-                        return rounded_rtt, 1, 0 if icmpReplyPacket.isValidResponse() else None, 1, 1
-
-                    else:
-                        print("error")
-                        return None, 1, 0
-            except timeout:
-                print("  *        *        *        *        *    Request timed out (By Exception).")
-                return None, 1, 1
-            finally:
-                mySocket.close()
-                return rounded_rtt, 1, 0  # this function is not used, ignore the warning
-
 
         def sendEchoRequest(self, printOption):
             if not self.__icmpTarget or not self.__destinationIpAddress:
@@ -950,7 +901,7 @@ def main():
     # icmpHelperPing.sendPing("209.233.126.254")
     # icmpHelperPing.sendPing("www.google.com")
     # icmpHelperPing.sendPing("gaia.cs.umass.edu")
-    icmpHelperPing.traceRoute("164.151.129.20")
+    # icmpHelperPing.traceRoute("164.151.129.20")
     # icmpHelperPing.traceRoute("122.56.99.243")
 
 
